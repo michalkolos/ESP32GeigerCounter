@@ -1,102 +1,42 @@
-#include <Arduino.h>
+#ifndef WEBSERVER_H
+#define WEBSERVER_H
+
 #include <WiFi.h>
 
-#include "settings.h"
-#include "credentials.h"
-#include "WebServer.h"
-
-void serverLoop();
-void software_Reset();
-void altLoop(void * parameter);
-
-WiFiServer server;
-TaskHandle_t taskAltLoop;
-WebServer webServer;
-
-
-void setup() {
-	Serial.begin(115200);
-
-	Serial.print("setup() running on core ");
-	Serial.println(xPortGetCoreID());
-
-	xTaskCreatePinnedToCore(
-    	altLoop, /* Function to implement the task */
-    	"altLoop", /* Name of the task */
-    	10000,  /* Stack size in words */
-    	NULL,  /* Task input parameter */
-    	0,  /* Priority of the task */
-    	&taskAltLoop,  /* Task handle. */
-    	0); /* Core where the task should run */
+class WebServer
+{
+private:
+    WiFiServer* serverPointer;
+public:
+    WebServer();
+    WebServer(WiFiServer* serverPointer);
+    ~WebServer();
+    
+    void serverLoop();
+    void setServerPointer(WiFiServer* serverPointer);
+};
 
 
-		WiFi.begin(mySSID, myPASSWORD);
+WebServer::WebServer(){
 
-    int wifi_loops=0;
-	int wifi_timeout = WIFI_TIMEOUT_DEF;
-
-    while (WiFi.status() != WL_CONNECTED) {
-		wifi_loops++;
-		Serial.print(".");
-		delay(500);
-		
-		if (wifi_loops>wifi_timeout){
-			software_Reset();
-		}
-	}
-
-	server.begin();
-	webServer.setServerPointer(&server);
 }
 
-
-
-
-void loop() {
-    Serial.print("loop() running on core ");
-	Serial.println(xPortGetCoreID());
-
-	delay(1000);
+WebServer::WebServer(WiFiServer* serverPointer){
+    this->serverPointer = serverPointer;
 }
 
-
-
-
-void altLoop(void * parameter){
-	while(1){
-
-		Serial.print("altLoop() running on core ");
-		Serial.println(xPortGetCoreID());
-		
-		delay(1100);
-
-		webServer.serverLoop();
-		// serverLoop();
-	}
-
-	vTaskDelete(taskAltLoop);
+WebServer::~WebServer(){
 }
 
-
-
-void software_Reset(){ // Restarts program from beginning but does not reset the peripherals and registers
-
-	Serial.print("resetting");
-	esp_restart(); 
+void WebServer::setServerPointer(WiFiServer* serverPointer){
+    this->serverPointer = serverPointer;
 }
 
-
-
-void serverLoop(){
+void WebServer::serverLoop(){
 
 	    while(1){
-        
-        if (WiFi.status() != WL_CONNECTED){
-            software_Reset();
-        }
 
-        WiFiClient client = server.available();
-        // Serial.println(client.);
+        WiFiClient client = this->serverPointer->available();
         if (client) {
             
             // an http request ends with a blank line
@@ -107,7 +47,7 @@ void serverLoop(){
                 
                 if (client.available()) {
                     char c = client.read();
-                    // Serial.write(c);
+                    Serial.write(c);
                     // if you've gotten to the end of the line (received a newline
                     // character) and the line is blank, the http request has ended,
                     // so you can send a reply
@@ -149,3 +89,5 @@ void serverLoop(){
     }
 
 }
+
+#endif

@@ -3,8 +3,7 @@
 
 #include <string>
 
-#define mySSID "Fiu-Fiu"
-#define myPASSWORD "H2Ozagadka"
+
 
 #define MINUTE_PERIOD 60000
 #define LOG_PERIOD 2000
