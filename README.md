@@ -1,2 +1,2 @@
-# ESP32_Multicore_test_script
-Script that runs code in parallel on both of the ESP32 microcontroller cores
+# ESP32GeigerCounter
+An Arduino script for web enabled Geiger counter measuring background radiation levels.

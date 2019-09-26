@@ -4,21 +4,35 @@
 #include "settings.h"
 #include "credentials.h"
 #include "WebServer.h"
+#include "Counts.h"
+
 
 void serverLoop();
 void software_Reset();
 void altLoop(void * parameter);
 
 WiFiServer server;
+Counts cpmCounter(30);
 TaskHandle_t taskAltLoop;
 WebServer webServer;
 
+volatile int counts = 0; 
+const int inputPin = 16;
+
+
+void ISR_impulse() { // Captures count of events from Geiger counter board
+	counts++;
+}
 
 void setup() {
 	Serial.begin(115200);
 
 	Serial.print("setup() running on core ");
 	Serial.println(xPortGetCoreID());
+    
+    pinMode(inputPin, INPUT);
+    interrupts();                                                            
+    attachInterrupt(digitalPinToInterrupt(inputPin), ISR_impulse, FALLING);
 
 	xTaskCreatePinnedToCore(
     	altLoop, /* Function to implement the task */
@@ -47,14 +61,22 @@ void setup() {
 
 	server.begin();
 	webServer.setServerPointer(&server);
+    webServer.setCpmPointer(&cpmCounter);
 }
 
 
 
 
 void loop() {
+
+    Serial.print(counts);
+    Serial.print(" -- ");
+    Serial.print(cpmCounter.getCpm(0));
+    Serial.print(" -- ");
     Serial.print("loop() running on core ");
 	Serial.println(xPortGetCoreID());
+
+    cpmCounter.check(&counts);
 
 	delay(1000);
 }
